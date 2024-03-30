@@ -11,5 +11,5 @@ spec:
     - name: wget
       image: busybox
       command: ['wget']
-      args: ['{{ include "oj-lab.fullname" . }}:{{ .Values.service.port }}']
+      args: ['{{ include "oj-lab.fullname" . }}:{{ .Values.platform.service.port }}']
   restartPolicy: Never

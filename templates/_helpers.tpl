@@ -54,9 +54,9 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 Create the name of the service account to use
 */}}
 {{- define "oj-lab.serviceAccountName" -}}
-{{- if .Values.serviceAccount.create }}
-{{- default (include "oj-lab.fullname" .) .Values.serviceAccount.name }}
+{{- if .Values.platform.serviceAccount.create }}
+{{- default (include "oj-lab.fullname" .) .Values.platform.serviceAccount.name }}
 {{- else }}
-{{- default "default" .Values.serviceAccount.name }}
+{{- default "default" .Values.platform.serviceAccount.name }}
 {{- end }}
 {{- end }}

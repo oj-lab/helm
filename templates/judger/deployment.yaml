@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "oj-lab.fullname" . }}-judger
+  labels:
+    oj-lab/application: platform
+    {{- include "oj-lab.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.judger.autoscaling.enabled }}
+  replicas: {{ .Values.judger.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "oj-lab.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.judger.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "oj-lab.labels" . | nindent 8 }}
+        {{- with .Values.judger.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      serviceAccountName: {{ include "oj-lab.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.judger.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.judger.securityContext | nindent 12 }}
+          image: "{{ .Values.judger.image.repository }}:{{ .Values.judger.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.judger.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.judger.service.port }}
+              protocol: TCP
+          livenessProbe:
+            {{- toYaml .Values.judger.livenessProbe | nindent 12 }}
+          readinessProbe:
+            {{- toYaml .Values.judger.readinessProbe | nindent 12 }}
+          resources:
+            {{- toYaml .Values.judger.resources | nindent 12 }}
+          {{- with .Values.judger.volumeMounts }}
+          volumeMounts:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+      {{- with .Values.judger.volumes }}
+      volumes:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.judger.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.judger.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.judger.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
