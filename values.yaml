@@ -6,7 +6,7 @@ platform:
   replicaCount: 1
 
   image:
-    repository: ghcr.io/oj-lab/oj-lab-platform/oj-lab-platform
+    repository: ghcr.io/oj-lab/oj-lab-platform
     pullPolicy: Always
     # Overrides the image tag whose default is the chart appVersion.
     tag: main
@@ -72,14 +72,14 @@ platform:
     #   cpu: 100m
     #   memory: 128Mi
 
-  livenessProbe:
-    httpGet:
-      path: /
-      port: http
-  readinessProbe:
-    httpGet:
-      path: /
-      port: http
+  # livenessProbe:
+  #   httpGet:
+  #     path: /
+  #     port: 8080
+  # readinessProbe:
+  #   httpGet:
+  #     path: /
+  #     port: 8080
 
   autoscaling:
     enabled: false
@@ -89,17 +89,19 @@ platform:
     # targetMemoryUtilizationPercentage: 80
 
   # Additional volumes on the output Deployment definition.
-  volumes: []
-  # - name: foo
-  #   secret:
-  #     secretName: mysecret
-  #     optional: false
+  volumes: 
+  - name: override-config
+    configMap:
+      name: ojlab-oj-lab-platform-configuration
+      items:
+        - key: config.yaml
+          path: override.yaml
 
   # Additional volumeMounts on the output Deployment definition.
-  volumeMounts: []
-  # - name: foo
-  #   mountPath: "/etc/foo"
-  #   readOnly: true
+  volumeMounts: 
+  - name: override-config
+    mountPath: /workdir/override.yaml
+    subPath: override.yaml
 
   nodeSelector: {}
 
@@ -110,12 +112,20 @@ platform:
   config:
     log:
       level: info
+    database:
+      dsn: "user=postgres password=development host=ojlab-postgresql-hl.default.svc.cluster.local port=5432 dbname=oj_lab sslmode=disable TimeZone=Asia/Shanghai"
+    redis:
+      host: "ojlab-redis-master.default.svc.cluster.local:6379"
+    judger:
+      host: "http://minikube:8000" # not used yet, judger currently not a service
+    minio:
+      endpoint: "ojlab-minio.default.svc.cluster.local:9000"
 
 judger:
   replicaCount: 1
 
   image:
-    repository: ghcr.io/oj-lab/judger/judger:main
+    repository: ghcr.io/oj-lab/judger
     pullPolicy: Always
     # Overrides the image tag whose default is the chart appVersion.
     tag: main
@@ -123,6 +133,10 @@ judger:
   imagePullSecrets: []
   nameOverride: ""
   fullnameOverride: ""
+
+  env:
+  - name: PLATFORM_URI
+    value: "http://ojlab-oj-lab-platform.default.svc.cluster.local:8080/"
 
   serviceAccount:
     # Specifies whether a service account should be created
@@ -151,7 +165,7 @@ judger:
 
   service:
     type: ClusterIP
-    port: 8080
+    port: 8000
     
   ingress:
     enabled: false
@@ -181,14 +195,14 @@ judger:
     #   cpu: 100m
     #   memory: 128Mi
 
-  livenessProbe:
-    httpGet:
-      path: /
-      port: http
-  readinessProbe:
-    httpGet:
-      path: /
-      port: http
+  # livenessProbe:
+  #   httpGet:
+  #     path: /
+  #     port: 8000
+  # readinessProbe:
+  #   httpGet:
+  #     path: /
+  #     port: 8000
 
   autoscaling:
     enabled: false
@@ -208,7 +222,7 @@ judger:
   volumeMounts: []
   # - name: foo
   #   mountPath: "/etc/foo"
-  #   readOnly: true
+  #   readOnly:
 
   nodeSelector: {}
 
@@ -222,6 +236,8 @@ judger:
 
 # Dependencies
 redis:
+  auth:
+    enabled: false
   master:
     containerPorts:
       redis: 6379

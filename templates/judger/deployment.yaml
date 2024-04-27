@@ -33,6 +33,8 @@ spec:
             {{- toYaml .Values.judger.securityContext | nindent 12 }}
           image: "{{ .Values.judger.image.repository }}:{{ .Values.judger.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.judger.image.pullPolicy }}
+          env: 
+            {{- toYaml .Values.judger.env | nindent 12 }}
           ports:
             - name: http
               containerPort: {{ .Values.judger.service.port }}
